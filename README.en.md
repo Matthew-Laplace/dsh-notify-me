@@ -30,6 +30,17 @@ A notification plugin for DSH Web / Desktop, so you can afford to keep full acce
 
 > The page or desktop app has to stay running (background / minimized is fine); system notifications need notification permission. Approval buttons rely on a Service Worker, so only Web has them — Desktop notifications carry no buttons, and clicking one takes you back to the conversation to decide. With host-side fallback enabled you still get external push once the page is closed — local toasts and the approval buttons still need the page.
 
+## What this fork changes
+
+This package is published as `@syc-ai/dsh-notify-me`, an unofficial fork of [chromoany/dsh-notify-me](https://github.com/chromoany/dsh-notify-me) 1.18.0. Upstream releases and maintenance stay with the original repository; this fork only carries the differences below:
+
+- **New "keep alerts when you come back" switch** (config key `keepOnReturn`, on in this fork): alerts that arrived while you were away are not withdrawn when you return to the DSH page — they wait until you dismiss them or click Close. Upstream has withdrawn them unconditionally since 1.17.0.
+- **Defaults changed to "alert in the foreground too, keep until dismissed"**: `donePolicy: "always"`, `currentHiddenOnly: false`, `autoDismiss: "never"`, `keepOnReturn: true`. Every one is still adjustable in Settings.
+- **Display resources added**: `icon.svg` plus `meta.title` / `meta.description` in `locale/zh.json` and `locale/en.json`, so the plugin manager and Settings show an icon and a name without activating the plugin.
+- **Everything else matches 1.18.0**, including per-session mute, external push, the host-side fallback, and the same-origin relay.
+
+These changes are also filed upstream as [issue #27](https://github.com/chromoany/dsh-notify-me/issues/27) and [PR #28](https://github.com/chromoany/dsh-notify-me/pull/28); whether upstream takes them is the maintainer's call.
+
 ## UI Preview
 
 ![Plain DSH notification shown through Edge on Windows, without approval buttons](https://raw.githubusercontent.com/chromoany/dsh-notify-me/main/docs/screenshots/notify-toast.png)
@@ -120,10 +131,10 @@ Open **Settings → Notify me**. The page lays out three blocks — how you get 
 ### When to alert
 
 - **Also alert "needs you" while the window is in front** (on by default): off means you only hear it once the window goes to the background;
-- **Stay quiet for the conversation on screen** (on by default): a wait in the conversation you are looking at keeps only the tab marker, and is delivered once you leave;
-- **When "reply finished" alerts** (default "background only"): background only / quiet for the open one / always — pick one;
-- **Dismiss the toast automatically** (default "keep while away"): keep while away / always close / never close — pick one; the choice only covers the closing on the timer, and leftover toasts are withdrawn once you are back at the page;
-- **Keep alerts when you come back** (off by default): when on, alerts that arrived while you were away are not withdrawn after you return to the DSH page — they stay until you dismiss them or click Close. Meant for an OS notification style that keeps alerts on screen, when the reminder itself should wait there;
+- **Stay quiet for the conversation on screen** (off in this fork): when on, a wait in the conversation you are looking at keeps only the tab marker, and is delivered once you leave;
+- **When "reply finished" alerts** (default "always" in this fork): background only / quiet for the open one / always — pick one;
+- **Dismiss the toast automatically** (default "never close" in this fork): keep while away / always close / never close — pick one; the choice only covers the closing on the timer, and whether a return withdraws leftovers is the next switch;
+- **Keep alerts when you come back** (on in this fork): alerts that arrived while you were away are not withdrawn after you return to the DSH page — they stay until you dismiss them or click Close. Meant for an OS notification style that keeps alerts on screen, when the reminder itself should wait there;
 - **Ignore subagent sessions** (on by default): skips background subagent sessions, while the one you have open still alerts;
 - **Click a toast to open that conversation** (on by default): switches to that conversation and brings the window forward — on Windows through the host route, on macOS / Linux through the `dsh://open` deep link — and with several tabs only one is raised.
 
@@ -133,7 +144,7 @@ Open **Settings → Notify me**. The page lays out three blocks — how you get 
 - **What counts as background**: switching to another app, being covered by another window, or minimizing all count; a window left in front with 3 minutes of no keyboard or mouse input counts too, and `idleMinutes: 0` falls back to looking only at the window.
 - **When "stay quiet for the conversation on screen" is replayed**: as usual once the window goes to the background or the idle timer fires; if you already handled it, it is dropped.
 - **The three "reply finished" choices**: "background only" = alert when you are not watching the page; "quiet for the open one" = the one on screen stays silent while other conversations still alert, useful with several open; "always" = never suppress. An old profile's "also alert 'reply finished' while in front" switch migrates to this setting automatically.
-- **"Keep while away"**: while you are at the page a plain toast closes itself after a few seconds; one that arrived while you were away stays in the notification centre until you come back. It is withdrawn the moment you are back (taskbar, Alt-Tab, the toast itself, or restoring a minimized window), and none of the three options affect that — so a toast you never opened in the notification centre is not left in your way. **With "keep alerts when you come back" on, the return no longer withdraws them either** — they wait until you dismiss them or click Close, and stay on screen under a persistent OS notification style. A toast with Approve / Reject carries no auto-dismiss timer — it stays until you click a button, answer the request in the page, or a newer request replaces it; a desktop approval toast, which cannot render buttons, closes after 12 s and is likewise not withdrawn while you are away. Both are withdrawn when you come back to the page (and kept when that switch is on).
+- **"Keep while away"**: while you are at the page a plain toast closes itself after a few seconds; one that arrived while you were away stays in the notification centre until you come back. Returning to the page (taskbar, Alt-Tab, the toast itself, or restoring a minimized window) withdraws it by default; **with "keep alerts when you come back" on it is not withdrawn**, and waits until you dismiss it or click Close (on in this fork) — under a persistent OS notification style it stays on screen. A toast with Approve / Reject carries no auto-dismiss timer — it stays until you click a button, answer the request in the page, or a newer request replaces it; a desktop approval toast, which cannot render buttons, closes after 12 s and is likewise not withdrawn while you are away. Both are withdrawn when you come back to the page (and kept when that switch is on).
 - **Fallback for a toast click**: on Desktop a window that will not raise leaves only the conversation switch, with the reason in `debug().raiseLast`; turn this switch off and a click does nothing.
 
 </details>

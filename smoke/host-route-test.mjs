@@ -20,7 +20,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 function assert(cond, msg) { if (!cond) throw new Error('ASSERT FAILED: ' + msg); }
 
 const host = await import(pathToFileURL(path.join(ROOT, 'lib', 'index.js')).href);
-assert(typeof host.apply === 'function' && host.name === 'dsh-notify-me', 'the host half exports a cordis plugin');
+const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
+assert(typeof host.apply === 'function' && host.name === pkg.name, 'the host half exports a cordis plugin');
 assert(host.FOCUS_ROUTE === '/__dsh-notify-me/focus-window', 'FOCUS_ROUTE is the path the page posts to');
 
 // Minimal cordis stand-in: apply() only asks for a webServer service and an

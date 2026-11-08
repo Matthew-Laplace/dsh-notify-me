@@ -48,7 +48,7 @@
 # through that public name.
 - insert:
     - id: notify-me
-      name: 'dsh-notify-me'
+      name: '@syc-ai/dsh-notify-me'
       config:
         # Public origin(s) of this deployment, e.g. ['https://dsh.example.com'];
         # empty means loopback / bind-address requests only.

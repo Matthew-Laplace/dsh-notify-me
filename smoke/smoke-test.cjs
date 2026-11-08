@@ -100,7 +100,7 @@ function bootBundle(opts) {
   if (opts && typeof opts.extend === 'function') opts.extend(sandbox, windowStub);
   vm.runInContext(SRC, sandbox, { filename: 'client.js' });
   if (!captured.reg) throw new Error('plugin did not register via __ModuleLoader__.load');
-  if (captured.reg.id !== 'dsh-notify-me') throw new Error('unexpected id ' + captured.reg.id);
+  if (captured.reg.id !== '@syc-ai/dsh-notify-me') throw new Error('unexpected id ' + captured.reg.id);
 
   // The alert sink is installed before apply() on purpose: binding an
   // interaction store can alert synchronously for a wait that already exists.
@@ -291,7 +291,8 @@ async function legacyHost() {
   assert(events.filter((e) => e.kind === 'done').length === 1, 'background session completion alerted');
   assert(getTitle().indexOf('✅') !== -1, 'the row.completed reminder bit marks the tab');
 
-  // 5) doneHiddenOnly default suppresses "done" while the page is visible
+  // 5) donePolicy=background suppresses "done" while the page is visible
+  win.__dshNotifyMe.setConfig({ donePolicy: 'background' });
   events.length = 0;
   doc.hidden = false; doc.visibilityState = 'visible';
   await sleep(400);
@@ -603,6 +604,9 @@ async function modernHost() {
   const bg = (title) => ({ running: true, displayTitle: title, retainedBy: {} });
 
   mod.apply(host.ctx);
+  // This suite covers the upstream "quiet while on screen" paths; the fork
+  // ships those quieter defaults off, so pin them here explicitly.
+  win.__dshNotifyMe.setConfig({ currentHiddenOnly: true });
   win.__dshNotifyMe.onEvent = (kind, payload) => events.push({ kind, ...payload });
   assert(host.listeners.status.length === 1,
     'sessionStatus subscribed (the 0.1.2-0.1.5 pendingInteractions store is gone on this host)');
@@ -1019,8 +1023,9 @@ async function completionUnreadChannel() {
   host.notifyStatus();
   assert(getTitle().indexOf('✅') === -1, 're-muting clears the mark');
 
-  // 8) doneHiddenOnly suppresses the toast while the page is visible but the
-  //    mark still carries the unread fact (the "come back and see" case)
+  // 8) donePolicy=background suppresses the toast while the page is visible but
+  //    the mark still carries the unread fact (the "come back and see" case)
+  win.__dshNotifyMe.setConfig({ donePolicy: 'background' });
   events.length = 0;
   doc.hidden = false; doc.visibilityState = 'visible';
   host.setStatus(new Map([
@@ -1156,7 +1161,7 @@ async function quickActionsHost() {
       windowStub.__DSH_BOOT__ = {
         entries: [
           { id: '@deepseek-ai/dsh-client-ui-session', url: '/plugins/??@deepseek-ai/dsh-client-ui-session/client.js&rev=aaa' },
-          { id: 'dsh-notify-me', url: '/plugins/??dsh-notify-me/client.js&rev=bbb' },
+          { id: '@syc-ai/dsh-notify-me', url: '/plugins/??dsh-notify-me/client.js&rev=bbb' },
         ],
       };
     },
@@ -1287,7 +1292,7 @@ async function quickActionsHost() {
         register(url) { offReg.push(url); return Promise.reject(new Error('must not register')); },
         addEventListener() {},
       } };
-      windowStub.__DSH_BOOT__ = { entries: [{ id: 'dsh-notify-me', url: '/plugins/??dsh-notify-me/client.js&rev=ccc' }] };
+      windowStub.__DSH_BOOT__ = { entries: [{ id: '@syc-ai/dsh-notify-me', url: '/plugins/??dsh-notify-me/client.js&rev=ccc' }] };
     },
   });
   off.win.__dshNotifyMe.setConfig({ quickActions: false });
@@ -1412,6 +1417,7 @@ async function subagentSessions() {
   const fork = (title) => bg(title, { parentId: 's1' });
 
   mod.apply(host.ctx);
+  win.__dshNotifyMe.setConfig({ currentHiddenOnly: true });
   win.__dshNotifyMe.onEvent = (kind, payload) => events.push({ kind, ...payload });
   assert(win.__dshNotifyMe.config.ignoreSubagent === true, 'ignoreSubagent defaults to true');
   assert(win.__dshNotifyMe.debug().ignoreSubagent === true, 'debug() reports ignoreSubagent');
@@ -2265,7 +2271,7 @@ function settingsSoundRows() {
   assert(base.text.indexOf('自定义音频文件') !== -1, 'the custom option renders');
   assert(base.text.indexOf('系统通知音（系统播放）') !== -1, 'the system option renders');
   assert(base.text.indexOf('选择音频文件') === -1, 'no file picker while the source is the built-in cue');
-  assert(base.text.indexOf('插件版本：dsh-notify-me v' + PKG_VERSION) !== -1, 'the version line still renders');
+  assert(base.text.indexOf('插件版本：dsh-notify-me（fork） v' + PKG_VERSION) !== -1, 'the version line still renders');
   assert(base.tree.type === 'div' && base.tree.props.className === 'dnm-wrap', 'root node shape unchanged');
   base.cleanup();
 
@@ -3654,7 +3660,7 @@ async function withdrawnOnReturn() {
     const host = buildHost({ withUiSession: false });
     host.setFace({ sessionId: 's1', running: false, pending: [], nodes: [], partial: null });
     b.mod.apply(host.ctx);
-    b.win.__dshNotifyMe.setConfig({ sound: false, language: 'zh', enabled: true, idleMinutes: 0, autoDismiss: 'present' });
+    b.win.__dshNotifyMe.setConfig({ sound: false, language: 'zh', enabled: true, idleMinutes: 0, autoDismiss: 'present', keepOnReturn: false });
     b.doc.hidden = true;
     b.doc.visibilityState = 'hidden';
     b.win.__dshNotifyMe.test('done');
@@ -3678,7 +3684,7 @@ async function withdrawnOnReturn() {
     const host = buildHost({ withUiSession: false });
     host.setFace({ sessionId: 's1', running: false, pending: [], nodes: [], partial: null });
     b.mod.apply(host.ctx);
-    b.win.__dshNotifyMe.setConfig({ sound: false, language: 'zh', enabled: true, idleMinutes: 0 });
+    b.win.__dshNotifyMe.setConfig({ sound: false, language: 'zh', enabled: true, idleMinutes: 0, keepOnReturn: false });
     b.setWindowFocus(false);
     b.win.__dshNotifyMe.test('done');
     const n = b.lastNotification();
@@ -3694,7 +3700,7 @@ async function withdrawnOnReturn() {
     const host = buildHost({ withUiSession: false });
     host.setFace({ sessionId: 's1', running: false, pending: [], nodes: [], partial: null });
     b.mod.apply(host.ctx);
-    b.win.__dshNotifyMe.setConfig({ sound: false, language: 'zh', enabled: true, idleMinutes: 0.0005 });
+    b.win.__dshNotifyMe.setConfig({ sound: false, language: 'zh', enabled: true, idleMinutes: 0.0005, keepOnReturn: false });
     b.win.__dshNotifyMe.test('done');
     const n = b.lastNotification();
     assert(n && n.closed === false, 'the toast is up before the idle clock runs out');
@@ -3732,7 +3738,7 @@ async function withdrawnOnReturn() {
         sandbox.navigator = { serviceWorker: serviceWorkerStub };
         sandbox.queueMicrotask = queueMicrotask;
         windowStub.__DSH_BOOT__ = {
-          entries: [{ id: 'dsh-notify-me', url: '/plugins/??dsh-notify-me/client.js&rev=ddd' }],
+          entries: [{ id: '@syc-ai/dsh-notify-me', url: '/plugins/??dsh-notify-me/client.js&rev=ddd' }],
         };
       },
     });
@@ -3740,7 +3746,7 @@ async function withdrawnOnReturn() {
     host.setFace({ sessionId: 's1', running: false, pending: [], nodes: [], partial: null });
     const answers = [];
     b.mod.apply(host.ctx);
-    b.win.__dshNotifyMe.setConfig({ sound: false, language: 'zh', enabled: true, idleMinutes: 0, quickActions: true });
+    b.win.__dshNotifyMe.setConfig({ sound: false, language: 'zh', enabled: true, idleMinutes: 0, quickActions: true, keepOnReturn: false });
     await sleep(20); // register() resolves on a promise tick
     assert(registered.length === 1, 'the button path registered its worker, got ' + registered.length);
     assert(b.win.__dshNotifyMe.debug().bridge === 'active', 'bridge reports active, got ' + b.win.__dshNotifyMe.debug().bridge);
@@ -3763,14 +3769,15 @@ async function withdrawnOnReturn() {
       'the approval ran answer("allowed-once") after the toast was withdrawn, got ' + JSON.stringify(answers));
   }
 
-  // 5) The setting has no say here: "never close" only silences the timer, and
-  //    input in a page the user is sitting in front of must withdraw nothing.
+  // 5) With keepOnReturn off (the upstream default), "never close" only
+  //    silences the timer; input in a page the user is sitting in front of must
+  //    withdraw nothing.
   {
     const b = bootBundle({ withNotification: true });
     const host = buildHost({ withUiSession: false });
     host.setFace({ sessionId: 's1', running: false, pending: [], nodes: [], partial: null });
     b.mod.apply(host.ctx);
-    b.win.__dshNotifyMe.setConfig({ sound: false, language: 'zh', enabled: true, idleMinutes: 0, autoDismiss: 'never' });
+    b.win.__dshNotifyMe.setConfig({ sound: false, language: 'zh', enabled: true, idleMinutes: 0, autoDismiss: 'never', keepOnReturn: false });
     b.win.__dshNotifyMe.test('done');
     const present = b.lastNotification();
     assert(present && present.closed === false, 'a toast is up while the page is in front');
@@ -3864,7 +3871,7 @@ async function swRefusalFeedback() {
     seed(sandbox) {
       sandbox.navigator = { serviceWorker: worker };
       sandbox.window.__DSH_BOOT__ = {
-        entries: [{ id: 'dsh-notify-me', url: '/plugins/??dsh-notify-me/client.js&rev=bbb' }],
+        entries: [{ id: '@syc-ai/dsh-notify-me', url: '/plugins/??dsh-notify-me/client.js&rev=bbb' }],
       };
     },
   });

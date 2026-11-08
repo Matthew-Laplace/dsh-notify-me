@@ -11,11 +11,11 @@ window.__dshNotifyMe.setConfig({
   enabled: true,           // false = disable all reminders (master switch)
   language: "auto",        // 'auto' follow the UI | 'zh' Simplified Chinese | 'en' English
   attentionHiddenOnly: false, // true = don't alert "needs you" while the page is visible
-  currentHiddenOnly: true,    // true = waits in the conversation on screen keep only the title marker (replayed once away)
-  donePolicy: "background",   // "reply finished" policy: 'background' only when away | 'smart' quiet only for the open one | 'always' always alert
+  currentHiddenOnly: false,   // default false in this fork: the visible conversation alerts too; true = title marker only (replayed once away)
+  donePolicy: "always",       // "reply finished" policy (default 'always' in this fork): 'background' only when away | 'smart' quiet only for the open one | 'always' always alert
   idleMinutes: 3,             // minutes without keyboard/mouse input before "away" counts (0 = turn the idle rule off)
-  autoDismiss: "present",     // toast auto-dismiss (the timer only; leftovers are withdrawn once you are back unless keepOnReturn is true): 'present' keep while away | 'always' always close | 'never' never close
-  keepOnReturn: false,        // false = withdraw the leftovers when you come back; true = keep them until you dismiss or click Close
+  autoDismiss: "never",       // toast auto-dismiss (default 'never' in this fork) (the timer only; leftovers are withdrawn once you are back unless keepOnReturn is true): 'present' keep while away | 'always' always close | 'never' never close
+  keepOnReturn: true,         // default true in this fork: keep them so a return does not withdraw; false = withdraw the leftovers when you come back
   ignoreSubagent: true,       // true = no alerts for background subagent sessions (the open one still alerts)
   mutedSessions: [],          // session ids muted per conversation (written by the sidebar bell or the right-click menu, survives reloads)
   muteRowButton: true,        // true = show the mute bell in the row hover strip; false = right-click menu only (a muted row keeps its bell)

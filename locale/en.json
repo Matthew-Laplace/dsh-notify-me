@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Message alerts (fork)",
+    "description": "Unofficial fork of the DSH desktop alert plugin. Alerts for needs-you and finished replies; this fork adds keep-on-return, alerts while the window is in front, and alerts that wait until dismissed."
+  }
+}

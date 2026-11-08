@@ -1,6 +1,25 @@
 # Changelog
 
-All notable changes to **dsh-notify-me** are documented here.
+All notable changes to **dsh-notify-me** are documented here. Entries before `1.19.0-syc.1` are upstream releases; see 「本 fork 的差异」 in README.
+
+## [1.19.0-syc.1] — 2026-11-08
+
+本 fork 的第一个发布，基于上游 `dsh-notify-me` 1.18.0，发布名 `@syc-ai/dsh-notify-me`。上游的版本与维护仍以原仓库为准。
+
+### 新增
+
+- **设置项「回到页面也保留提醒」**（配置键 `keepOnReturn`，默认开）：回到 DSH 页面时不再收起离开期间收到的通知，留到用户点掉或点「关闭」。上游 1.17.0 起会无条件收起，这条是 issue #27 的主要诉求。
+- **插件清单展示资源**：`icon.svg` 与 `locale/zh.json` / `locale/en.json` 的 `meta.title` / `meta.description`，插件管理器与设置页在不激活插件时也能显示图标与名称。
+
+### 变更
+
+- **默认值改为“前台也提醒、通知等手动关闭”**：`donePolicy: "always"`、`currentHiddenOnly: false`、`autoDismiss: "never"`、`keepOnReturn: true`。全部可在设置页改回去。
+- **包名改为 `@syc-ai/dsh-notify-me`**：`package.json`、`cordis.patch.yml` 的条目名、宿主半 `name` 导出与浏览器半 `__ModuleLoader__.load` 的注册 id 同步更新；`files` / `exports` 增加 `icon.svg` 与 `locale/*.json`。
+- 中英 README、`docs/console-config.md` / `.en.md` 的默认值与「本 fork 的差异」章节同步更新。
+
+### 上游
+
+- 相关需求与实现已提给上游：[issue #27](https://github.com/chromoany/dsh-notify-me/issues/27)、[PR #28](https://github.com/chromoany/dsh-notify-me/pull/28)。
 
 ## [1.18.0] — 2026-11-08
 

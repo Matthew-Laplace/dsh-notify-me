@@ -26,7 +26,9 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(HERE, '..');
 const SRC = fs.readFileSync(path.join(ROOT, 'lib', 'client.js'), 'utf8');
-const PKG_VERSION = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version;
+const PKG = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
+const PKG_VERSION = PKG.version;
+const PKG_NAME = PKG.name;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const tick = () => sleep(60);
@@ -259,7 +261,7 @@ async function main() {
     });
 
     // Sibling entry 3: the plugin under test, loaded from its real bundle.
-    root.plugin({ name: 'dsh-notify-me', inject: b.mod.inject, apply: b.mod.apply });
+    root.plugin({ name: PKG_NAME, inject: b.mod.inject, apply: b.mod.apply });
     await tick();
 
     assert(b.mod.inject.indexOf('uiSession') === -1,
